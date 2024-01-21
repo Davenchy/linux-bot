@@ -216,8 +216,8 @@ assistant_instance.import_abilities_module("abilities")
 `assistant.add_ability` to load it.
 
 `Assistant.ability` uses `AssistantAbility.generate_from_function` under
-the hood to generate **AssistantAbility** to generate ability object.
+the hood to generate **AssistantAbility** object.
 
-`assistant.import_abilities_module` loads all functions from the module then
-loads all functions with ability object injected into it at once, means that
+`assistant.import_abilities_module` loads all the functions from the module then
+uses functions with ability object injected into, means that
 any python code in `abilities.py` like in example will be executed.
