@@ -104,7 +104,7 @@ except Exception as err:
 
 ## Assistant Abilities In Deep
 
-AssistantAbility is the object that contains the definition of an ability.
+> **AssistantAbility** is the object that contains the definition of an ability.
 
 ```python
 from assistant import AssistantAbility
@@ -157,7 +157,7 @@ ability = AssistantAbility.generate_from_function(
 
 Now it is much easier to define an ability but you could also use
 `Assistant.ability` function decorator to generate the ability object and
-inject it into the function itself.
+**inject it into the function itself**.
 
 ```python
 from assistant import Assistant
@@ -188,7 +188,7 @@ def get_files_list(path: str) -> str:
 assistant_instance.add_ability(get_files_list)
 ```
 
----
+### Load Abilities From Modules
 
 Now let's clean up our code and move the abilities to another file and just
 import the ability objects or the functions itself into our main file.
@@ -200,7 +200,7 @@ instead of loading them one by one you can load all of them at once:
 assistant_instance.import_abilities_module("abilities")
 ```
 
----
+### Quick Notes
 
 `assistant.use` uses `Assistant.ability` under the hood to generate
 **AssistantAbility** and inject it into the function then uses
