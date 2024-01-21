@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-from datetime import datetime
 import os
 
-from assistant import Assistant, json
+from assistant import Assistant
 
 assistant = Assistant(
     """You are an assistant running on a linux machine, your main role is to
@@ -25,17 +24,7 @@ assistant = Assistant(
 )
 
 
-@assistant.ability()
-def get_date_and_time():
-    """Get date and time"""
-    now = datetime.now()
-
-    return "hour: {}, minute: {}, second: {}, day: {}, month: {}, year: {}".format(
-        now.hour, now.minute, now.second, now.day, now.month, now.year
-    )
-
-
-@assistant.ability()
+@assistant.use()
 def get_current_working_directory():
     """Get current working directory"""
     try:
@@ -44,15 +33,7 @@ def get_current_working_directory():
         return "Error: Failed to get current working directory"
 
 
-@assistant.ability(path="the path to list its file names")
-def get_files(path: str) -> str:
-    """return a list of files in specific path"""
-    try:
-        files = os.listdir(os.path.expanduser(path))
-        return json.dumps(", ".join([file for file in files]))
-    except Exception:
-        return "Error: Failed to get files list"
-
+assistant.import_abilities_module("abilities")
 
 if __name__ == "__main__":
     while True:
