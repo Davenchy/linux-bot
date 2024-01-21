@@ -1,4 +1,5 @@
 import inspect
+import importlib
 from enum import EnumType
 from pathlib import Path
 from typing import Callable, Dict, List, Union, cast
@@ -119,6 +120,44 @@ class AssistantAbility:
     def __call__(self, *args, **kwargs):
         return self._action(*args, **kwargs)
 
+    @staticmethod
+    def generate_from_function(
+            **descriptions: str) -> Callable[[Callable], "AssistantAbility"]:
+        def wrapper(func: Callable[..., str]) -> AssistantAbility:
+            if func.__doc__ is None:
+                raise ValueError("Ability function must has docstring")
+
+            ability = AssistantAbility(func.__name__, func.__doc__, func)
+            ability_signature = inspect.signature(func)
+            params = ability_signature.parameters
+
+            for param in params:
+                obj = params[param]
+
+                if obj.name not in descriptions:
+                    raise ValueError(
+                        f"Missing description for argument: {obj.name}")
+
+                if obj.annotation == inspect.Parameter.empty:
+                    raise ValueError(
+                        f"Missing type annotation for argument: {obj.name}")
+
+                is_required = obj.default is inspect.Parameter.empty
+                enum = None
+
+                if isinstance(obj.annotation, EnumType):
+                    enum = list(obj.annotation.__members__.keys())
+
+                ability.add_argument(obj.name,
+                                     type_to_text(obj.annotation),
+                                     descriptions[obj.name],
+                                     is_required,
+                                     enum,
+                                     )
+
+            return ability
+        return wrapper
+
 
 class Assistant:
     def __init__(self, instructions: str):
@@ -173,17 +212,57 @@ class Assistant:
         except KeyboardInterrupt:
             print("System: Speech Interrupted!")
 
-    def add_ability(self, name: str, description: str, action: Callable):
-        ability = AssistantAbility(name, description, action)
-        self._abilities[name] = ability
+    def add_ability(self, ability: Union[AssistantAbility, object]):
+        ability = Assistant.get_injected_ability(ability)
+        self._abilities[ability.name] = ability
         return ability
 
-    def ability(self, **descriptions: str):
-        def set_ability_wrapper(func: Callable[..., str]):
-            ability = generate_ability_from_function(**descriptions)(func)
-            self._abilities[ability.name] = ability
+    def use(self, **descriptions: str):
+        """Generate assistant ability from a function and inject inside
+        then add it."""
+        def wrapper(func: Callable[..., str]):
+            Assistant.ability(**descriptions)(func)
+            self.add_ability(func)
             return func
-        return set_ability_wrapper
+        return wrapper
+
+    @staticmethod
+    def ability(**descriptions: str):
+        """Generate assistant ability from a function and inject inside"""
+        def wrapper(func: Callable[..., str]):
+            ability = AssistantAbility.generate_from_function(
+                **descriptions)(func)
+            setattr(func, "__assistant_ability__", ability)
+            return func
+        return wrapper
+
+    @staticmethod
+    def get_injected_ability(obj: object) -> AssistantAbility:
+        """Get the injected AssistantAbility from an object"""
+        if not Assistant.has_injected_ability(obj):
+            raise ValueError("Object is not an AssistantAbility")
+        if isinstance(obj, AssistantAbility):
+            return obj
+        obj = getattr(obj, "__assistant_ability__")
+        return cast(AssistantAbility, obj)
+
+    @staticmethod
+    def has_injected_ability(obj: object) -> bool:
+        """Check if an object is an AssistantAbility"""
+        if isinstance(obj, AssistantAbility):
+            return True
+        obj = getattr(obj, "__assistant_ability__", None)
+        return obj is not None and isinstance(obj, AssistantAbility)
+
+    def import_abilities_module(self, path: str):
+        module = importlib.import_module(path)
+        members = inspect.getmembers(module)
+        abilities = [
+            member[1] for member in members
+            if Assistant.has_injected_ability(member[1])
+        ]
+        for ability in abilities:
+            self.add_ability(ability)
 
     def _execute_abilities(self, call: ChatCompletionMessageToolCall):
         ability_call = call.function
@@ -254,37 +333,3 @@ def type_to_text(obj: object) -> str:
         return "null"
     else:
         raise ValueError(f"Unsupported type: {type(obj)}")
-
-
-def generate_ability_from_function(
-        **descriptions: str) -> Callable[[Callable], AssistantAbility]:
-    def wrapper(func: Callable[..., str]) -> AssistantAbility:
-        if func.__doc__ is None:
-            raise ValueError("Ability function must has docstring")
-
-        ability = AssistantAbility(func.__name__, func.__doc__, func)
-        ability_signature = inspect.signature(func)
-        params = ability_signature.parameters
-
-        for param in params:
-            obj = params[param]
-
-            if obj.name not in descriptions:
-                raise ValueError(
-                    f"Missing description for argument: {obj.name}")
-
-            if obj.annotation == inspect.Parameter.empty:
-                raise ValueError(
-                    f"Missing type annotation for argument: {obj.name}")
-
-            ability.add_argument(obj.name,
-                                 type_to_text(obj.annotation),
-                                 descriptions[obj.name],
-                                 obj.default is inspect.Parameter.empty,
-                                 list(obj.annotation.__members__.keys())
-                                 if isinstance(obj.annotation, EnumType) else
-                                 None
-                                 )
-
-        return ability
-    return wrapper
