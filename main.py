@@ -11,9 +11,6 @@ assistant = Assistant(
     providing the direct answer to the questions or helpful tips or urls to
     online solutions.
 
-    You will be provided information about the system you are running on.
-    You will be provided with information with every use input like date and
-    time.
     You will be provided with useful tools to help you explore the users system
     You will gain the ability to execute commands on users system, so make sure
     commands you are running are valid and never destroy users system or even
@@ -46,6 +43,19 @@ assistant = Assistant(
     If the command is not installed on the system ask the user to install it.
 
     Any output contains shell commands, ask the user to execute them.
+
+    Whenever the user interrupts the assistant, notify the user that
+    the process was canceled and you are ready to continue.
+
+    Whenever you need to run a command that requires user interact, run it in
+    any terminal the user can interact with it.
+
+    Whenever you need to run a command that will loop for ever, run it will
+    limited counts if possible otherwise run it in a new termainl so the user
+    can stop whenever it is suitable.
+
+    Usually represent size values in suitable units to represent the value
+    with less digits to be easy to read.
 """
 )
 
@@ -73,6 +83,7 @@ if __name__ == "__main__":
             exit(0)
 
         try:
-            assistant(user_input)
+            # turn off speech for low API usage
+            assistant(user_input, with_speech=False)
         except KeyboardInterrupt:
             print("\nSystem: Canceled!")
