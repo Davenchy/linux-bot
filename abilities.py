@@ -1,5 +1,6 @@
 import os
 import sys
+import psutil
 import shutil
 import subprocess
 from datetime import datetime
@@ -134,7 +135,52 @@ def execute(command: str) -> str:
             "stderr": e.stderr,
         })
 
-# !TODO: find system monitoring and information
+
+@Assistant.ability()
+def get_environment_variables():
+    """Get all environment variables"""
+    return json.dumps(dict(os.environ))
+
+
+@Assistant.ability()
+def get_disk_partitions():
+    """Get all system disks, their information and usage"""
+    # !BUG: Still under development
+    return json.dumps([
+        {
+            "disk": partition.device,
+            "information": partition,
+            "usage": psutil.disk_usage(partition.device),
+        }
+        for partition in psutil.disk_partitions()
+    ])
+
+
+@Assistant.ability()
+def get_system_usage():
+    """Get system usage like: cpu, memory, disk"""
+    # Get CPU usage in 1 minutes
+    cpu_percent_1 = psutil.cpu_percent(interval=1)
+    # Get CPU usage in 5 minutes
+    cpu_percent_5 = psutil.cpu_percent(interval=5)
+    # Get CPU usage in 15 minutes
+    cpu_percent_15 = psutil.cpu_percent(interval=15)
+
+    # Get memory usage
+    memory_info = psutil.virtual_memory()
+
+    # Print system usage information
+    return f"""CPU Usage in one minute: {cpu_percent_1}
+    CPU Usage in five minutes: {cpu_percent_5}
+    CPU Usage in fifteen minutes: {cpu_percent_15}
+
+    Memory Usage: {memory_info.percent}"""
+
+
+if __name__ == "__main__":
+    get_system_usage()
+# !TODO: check processes network usage
+# !TODO: check listening process and their ports
 # !TODO: check network connectivity
 # !TODO: ping addresses
 # !TODO: get network interfaces
