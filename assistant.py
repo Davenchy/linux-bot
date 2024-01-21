@@ -161,6 +161,8 @@ class AssistantAbility:
 
 
 class Assistant:
+    _MESSAGE_LIMIT_ = 4096
+
     def __init__(self, instructions: str):
         self._instructions = instructions
         self._history: List[ChatCompletionMessageParam] = []
@@ -270,10 +272,11 @@ class Assistant:
 
         print(
             colored(
-                f"Use Ability: {ability_call.name}: {ability_call.arguments}",
+                f"Use Ability: {ability_call.name} {ability_call.arguments}",
                 "green"))
 
         def response(content: str) -> ChatCompletionToolMessageParam:
+            # if len(response.content) > Assistant._MESSAGE_LIMIT_:
             return {
                 "role": "tool",
                 "tool_call_id": call.id,
@@ -289,9 +292,27 @@ class Assistant:
         ability = self._abilities[ability_call.name]
         try:
             results = ability(**args)
+        except KeyboardInterrupt:
+            print(colored("System: Ability Interrupted!", "red"))
+            return response(
+                "Error: Ability execution interrupted by the user!")
         except Exception as e:
             return response(f"Error: {e}")
         return response(results)
+
+    def __send_tool_responses(self, response: ChatCompletionToolMessageParam):
+        tool_call_id = response.get("tool_call_id")
+        content = response.get("content")
+
+        while len(content) > 0:
+            piece: ChatCompletionToolMessageParam = {
+                "role": "tool",
+                "tool_call_id": tool_call_id,
+                "content": content[:Assistant._MESSAGE_LIMIT_],
+            }
+
+            self._history.append(piece)
+            content = content[Assistant._MESSAGE_LIMIT_:]
 
     def __call__(self, input: str,
                  with_output: bool = True,
@@ -308,7 +329,7 @@ class Assistant:
             calls = message.tool_calls
             if calls is not None:
                 response = self._execute_abilities(calls[0])
-                self._history.append(response)
+                self.__send_tool_responses(response)
                 continue
 
             text = cast(str, response.choices[0].message.content)
