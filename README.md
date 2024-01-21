@@ -31,6 +31,12 @@ Linux Bot still in beta but it comes with the following abilities for testing:
 - Awareness of the current working directory.
 - Awareness of the current date and time.
 - Capability to list files in any specified path.
+- Ability to read files and analyze their content.
+- Ability to get file type and size.
+- Awareness of the installed package managers.
+- Ability to check if a package is installed or not.
+- Ability to install packages using a package manager.
+- Ability to execute general shell commands and analyze their output and errors.
 
 ### Define Ability
 
