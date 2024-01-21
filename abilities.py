@@ -145,15 +145,23 @@ def get_environment_variables():
 @Assistant.ability()
 def get_disk_partitions():
     """Get all system disks, their information and usage"""
-    # !BUG: Still under development
-    return json.dumps([
-        {
+    results = list()
+
+    for partition in psutil.disk_partitions():
+        usage = psutil.disk_usage(partition.device)
+
+        results.append({
             "disk": partition.device,
-            "information": partition,
-            "usage": psutil.disk_usage(partition.device),
-        }
-        for partition in psutil.disk_partitions()
-    ])
+            "usage_total": usage.total,
+            "usage_used": usage.used,
+            "usage_free": usage.free,
+            "usage_percent": usage.percent,
+            "mountpoint": partition.mountpoint,
+            "fstype": partition.fstype,
+            "mount_options": partition.opts,
+        })
+
+    return json.dumps(results)
 
 
 @Assistant.ability()
@@ -169,16 +177,25 @@ def get_system_usage():
     # Get memory usage
     memory_info = psutil.virtual_memory()
 
-    # Print system usage information
-    return f"""CPU Usage in one minute: {cpu_percent_1}
-    CPU Usage in five minutes: {cpu_percent_5}
-    CPU Usage in fifteen minutes: {cpu_percent_15}
+    return json.dumps({
+        "disks": get_disk_partitions(),
+        "cpu_1min": cpu_percent_1,
+        "cpu_5min": cpu_percent_5,
+        "cpu_15min": cpu_percent_15,
+        "memory_free": memory_info.free,
+        "memory_used": memory_info.used,
+        "memory_total": memory_info.total,
+        "memory_percent": memory_info.percent,
+        "memory_slab": memory_info.slab,
+        "memory_active": memory_info.active,
+        "memory_inactive": memory_info.inactive,
+        "memory_buffers": memory_info.buffers,
+        "memory_cached": memory_info.cached,
+        "memory_shared": memory_info.shared,
+        "memory_available": memory_info.available,
+    })
 
-    Memory Usage: {memory_info.percent}"""
 
-
-if __name__ == "__main__":
-    get_system_usage()
 # !TODO: check processes network usage
 # !TODO: check listening process and their ports
 # !TODO: check network connectivity

@@ -37,6 +37,9 @@ Linux Bot still in beta but it comes with the following abilities for testing:
 - Ability to check if a package is installed or not.
 - Ability to install packages using a package manager.
 - Ability to execute general shell commands and analyze their output and errors.
+- Awareness of the environment variables.
+- Connected disks and partitions, their information and usage.
+- System CPU and Memory usage.
 
 ### Define Ability
 
