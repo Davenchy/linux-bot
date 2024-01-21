@@ -1,7 +1,8 @@
 import inspect
 import importlib
-from enum import EnumType
 from pathlib import Path
+from enum import EnumType
+from termcolor import colored
 from typing import Callable, Dict, List, Union, cast
 
 from openai import audio, chat
@@ -266,6 +267,11 @@ class Assistant:
 
     def _execute_abilities(self, call: ChatCompletionMessageToolCall):
         ability_call = call.function
+
+        print(
+            colored(
+                f"Use Ability: {ability_call.name}: {ability_call.arguments}",
+                "green"))
 
         def response(content: str) -> ChatCompletionToolMessageParam:
             return {
