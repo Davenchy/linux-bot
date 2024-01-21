@@ -34,15 +34,23 @@ Linux Bot still in beta but it comes with the following abilities for testing:
 
 ### Define Ability
 
-An ability is a function that takes arguments and returns a string.
+> An ability is a function that takes arguments and returns a string.
 
-- Ability function is decorated using `@assistant.ability` decorator.
-  where the **assistant** is the instance of the `Assistant` class you want
-  to register this ability to.
-- The ability function is required to add a description in the ability decorator for each argument.
-- The ability function is required to add type annotations for each argument, so the system can determine the correct type to pass.
-- The ability function is required to add a DocString for the ability function that describes the need of the function.
-- The ability function is required to return a string which contains the described output of the function.
+- Decorate The Ability Function
+  - Use the `@assistant.ability` decorator to define an ability.
+  - The `assistant` here is the instance of the `Assistant` class you want to
+    add the ability to.
+- Add Argument Descriptions
+  - Add a description in the ability decorator for each argument.
+- Provide Type Annotations
+  - Type annotations are required for each argument as it helps the system to
+    understand the type of the argument.
+- Write a DocString
+  - Add a DocString for the ability function to describe why the assistant
+    should use this ability.
+- Return a String
+  - Make sure your ability function returns a string, which contains
+    the described output.
 
 Here's an example for the `get_files_list` ability:
 
